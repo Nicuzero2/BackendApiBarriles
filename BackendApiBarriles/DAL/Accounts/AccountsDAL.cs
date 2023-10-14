@@ -5,15 +5,24 @@ namespace BackendApiBarriles.DAL.Accounts
 {
     public class AccountsDAL
     {
-        string connectionString = "Data Source=LAPTOP-LIPHGIDV\\SQLEXPRESS;Initial Catalog=BarrilAppDB;Integrated Security=True";         
+        private IConfiguration _configuration;
+
+        public AccountsDAL(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        public string GetConnectionString()
+        {
+            return _configuration.GetConnectionString("BDDQA");
+        }
         public string[] insertNewUser(string user, string passwordEncrypted, string email, int numCellphone)
         {
             string[] res = {};
             try
-            {
+            {                
                 if (userDuplicated(user))
                 {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    using (SqlConnection connection = new SqlConnection(GetConnectionString()))
                     {
                         connection.Open();
 
@@ -60,22 +69,16 @@ namespace BackendApiBarriles.DAL.Accounts
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
                 {
                     connection.Open();
 
                     using (SqlCommand command = new SqlCommand("sp_Accounts_ValidaUsername", connection))
                     {
-                        command.CommandType = CommandType.StoredProcedure;
-
-                        // Definir los parámetros del procedimiento almacenado
+                        command.CommandType = CommandType.StoredProcedure;                        
                         command.Parameters.AddWithValue("@Username", username);
-
-                        // Crear un adaptador de datos para ejecutar el procedimiento almacenado
                         SqlDataAdapter adapter = new SqlDataAdapter(command);
                         DataTable dataTable = new DataTable();
-
-                        // Llenar el DataTable con los resultados del procedimiento almacenado
                         adapter.Fill(dataTable);
                         
                         if (dataTable.Rows.Count > 0)
@@ -89,6 +92,32 @@ namespace BackendApiBarriles.DAL.Accounts
                             return true;                            
                         }
                     }                    
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        public bool validateUserPassword(string username, string passwordEncripted)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                {
+                    connection.Open();
+
+                    using (SqlCommand command = new SqlCommand("sp_Accounts_validateuserpass", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@user", username);
+                        command.Parameters.AddWithValue("@passwordEncripted", passwordEncripted);
+                        SqlDataAdapter adapter = new SqlDataAdapter(command);
+                        DataTable dataTable = new DataTable();
+                        adapter.Fill(dataTable);
+                        connection.Close();
+                        return dataTable.Rows.Count > 0;                        
+                    }
                 }
             }
             catch (Exception ex)

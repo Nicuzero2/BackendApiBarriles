@@ -5,19 +5,47 @@ namespace BackendApiBarriles.BL
 {
     public class Util
     {
-        public string EncriptarClave(string clave)
+        public string Encrypt(string plainText, string key)
         {
-            using (SHA256 sha256 = SHA256.Create())
+            using (Aes aesAlg = Aes.Create())
             {
-                byte[] bytes = Encoding.UTF8.GetBytes(clave);
-                byte[] hashBytes = sha256.ComputeHash(bytes);
-                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                aesAlg.Key = Encoding.UTF8.GetBytes(key);
+
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.Key);
+
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            swEncrypt.Write(plainText);
+                        }
+                    }
+                    return Convert.ToBase64String(msEncrypt.ToArray());
+                }
             }
         }
 
-        public string MezclarClaveConPalabra(string claveEncriptada, string palabra)
+        public string Decrypt(string cipherText, string key)
         {
-            return claveEncriptada + palabra;
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = Encoding.UTF8.GetBytes(key);
+
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, null);
+
+                using (MemoryStream msDecrypt = new MemoryStream(Convert.FromBase64String(cipherText)))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                        {
+                            return srDecrypt.ReadToEnd();
+                        }
+                    }
+                }
+            }
         }
     }
 }
