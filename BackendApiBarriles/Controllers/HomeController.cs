@@ -29,33 +29,6 @@ namespace BackendApiBarriles.Controllers
         {
             AccountsBL accBL = new AccountsBL(_configuration);
             return Ok(accBL.CreateAccount(user, password, numberCellphone, email));
-        }
-
-        [HttpGet("PRUEBADELXEO")]
-        public IActionResult test(int x, int y, int z)
-        {
-            if (x % 2 != 0)
-            {
-                x = x + 1;
-            }
-
-            y = y - 1;
-
-            if (y % 2 != 0)
-            {
-                y = y + 1;
-            }
-            z = x + y;
-
-            var response = new
-            {
-                X = x,
-                Y = y,
-                Z = z
-            };
-
-            return Ok(response);
-        }
-
+        }       
     }
 }
